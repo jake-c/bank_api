@@ -6,6 +6,8 @@ const accountSchema = new mongoose.Schema({
     userId: Number,
     accountType: String,
     balance: Number
+}, {
+    timestamps: true
 });
 
 

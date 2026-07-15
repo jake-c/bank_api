@@ -6,7 +6,10 @@
  * It decides whether an operation should be allowed.
  */
 
+
+//Require returns exactly what we set to module.exports in the other file.
 const accountRepository = require("../repositories/accountRepository");
+const transactionRepository = require("../repositories/transactionRepository");
 
 function createServiceError(message, statusCode) {
     const error = new Error(message);
@@ -61,9 +64,24 @@ async function deposit(accountId, amount) {
 
     const newBalance = account.balance + amount;
 
-    return accountRepository.updateAccountById(accountId, {
+    const updatedAccount = await accountRepository.updateAccountById(accountId, {
         balance: newBalance
     });
+
+    // Create a record in the transaction collection of every deposit, traced to account Id.
+    /* IDEALLY, we would make the update to the account and the 
+    creation of the transaction atomic events, so if for some reason
+    createTransaction fails, we would roll back the update to account.
+    */
+    await transactionRepository.createTransaction({
+        accountId,
+        txn_type: "DEPOSIT",
+        amount
+    });
+
+    // Return the updatedAccount back with the new balance field, so that the controller can
+    // use the return of this method to throw it into json for res.
+    return updatedAccount;
 }
 
 async function withdraw(accountId, amount) {
@@ -82,9 +100,22 @@ async function withdraw(accountId, amount) {
 
     const newBalance = account.balance - amount;
 
-    return accountRepository.updateAccountById(accountId, {
+    const updatedAccount = await accountRepository.updateAccountById(accountId, {
         balance: newBalance
     });
+
+
+    /* IDEALLY, we would make the update to the account and the 
+    creation of the transaction atomic events, so if for some reason
+    createTransaction fails, we would roll back the update to account.
+    */
+    await transactionRepository.createTransaction({
+        accountId,
+        txn_type: "WITHDRAWAL",
+        amount
+    });
+
+    return updatedAccount;
 }
 
 async function deleteAccount(accountId) {
@@ -97,11 +128,22 @@ async function deleteAccount(accountId) {
     return account;
 }
 
+async function getTransactions(accountId) {
+    const account = await accountRepository.findAccountById(accountId);
+
+    if (!account) {
+        throw createServiceError("Account not found", 404);
+    }
+
+    return transactionRepository.findTransactionsByAccountId(accountId);
+   
+}
 module.exports = {
     createAccount,
     getAllAccounts,
     getAccountById,
     deposit,
     withdraw,
-    deleteAccount
+    deleteAccount,
+    getTransactions
 };

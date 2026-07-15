@@ -11,6 +11,8 @@ const accountController = require("../controllers/accountController");
 const router = express.Router();
 
 // POST /api/accounts
+//Whenever a POST comes in matching the endpoint ending with api/accounts,
+//Call create account with req and res. The HTTP json body.
 router.post("/", accountController.createAccount);
 
 // GET /api/accounts
@@ -28,4 +30,7 @@ router.post("/:id/withdraw", accountController.withdraw);
 // DELETE /api/accounts/:id
 router.delete("/:id", accountController.deleteAccount);
 
-module.exports = router;
+// GET /api/accounts/:id/transactions
+router.get("/:id/transactions", accountController.getTransactions);
+
+module.exports = router; 

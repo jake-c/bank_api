@@ -4,6 +4,8 @@
  * Purpose:
  * Handles HTTP requests and responses for account endpoints.
  * It extracts request data, calls the service, and returns JSON.
+ * Basic notes: all of these functions take HTTP requests as input. 
+ *
  */
 
 const accountService = require("../services/accountService");
@@ -17,6 +19,7 @@ function sendError(res, error) {
 async function createAccount(req, res) {
     try {
         const account = await accountService.createAccount(req.body);
+        //Return a 201 created code and the json output of the account document.
         return res.status(201).json(account);
     } catch (error) {
         return sendError(res, error);
@@ -80,11 +83,21 @@ async function deleteAccount(req, res) {
     }
 }
 
+async function getTransactions(req, res) {
+    try {
+        const transactions = await accountService.getTransactions(req.params.id);
+
+        return res.status(200).json(transactions);
+    } catch(error) {
+        return sendError(res, error);
+    }
+}
 module.exports = {
     createAccount,
     getAllAccounts,
     getAccountById,
     deposit,
     withdraw,
-    deleteAccount
+    deleteAccount,
+    getTransactions
 };
